@@ -1,3 +1,5 @@
+{%load static tailwind_tags%}
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -9,11 +11,12 @@
         text-decoration: underline;
       }
     </style>
+    {% tailwind_css %}
   </head>
   <body>
     <main>
       {% block content %} {% endblock %}
-      <h1>Welcome to RateMyResume</h1>
+      <h1 class="bg-red-500 text-3xl">Welcome to RateMyResume</h1>
       <p class="underline">The Django and NLP powered resume analyzer</p>
     </main>
   </body>

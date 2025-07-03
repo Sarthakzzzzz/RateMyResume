@@ -3,6 +3,7 @@
 # it defines the main view for the application.
 from django.http import HttpResponse
 from django.template import loader
+from django.shortcuts import render
 
 
 def Home(request):
@@ -15,6 +16,12 @@ def score(request):
     return HttpResponse(template.render(request=request))
 
 
-def analyze(request):
-    template = loader.get_template("analyze.html")
-    return HttpResponse(template.render(request=request))
+def upload_resume(request):
+    if request.method == "POST":
+        resume_file = request.FILES.get("resume")
+        if resume_file:
+            return render(request, "score.html", {"message": "Resume uploaded successfully!", "filename": resume_file.name})
+        else:
+            return render(request, "score.html", {"message": "No file uploaded."})
+    else:
+        return render(request, "score.html")

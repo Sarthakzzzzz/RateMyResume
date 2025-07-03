@@ -26,11 +26,15 @@ SECRET_KEY = "django-insecure-3s18%l!t76@cx-l%%6&cauy^#*+m4h%ed#98jv12ax5^hxib+d
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
+INTERNAL_IPS = ['127.0.0.1']
 
 # Application definition
 
 INSTALLED_APPS = [
+    "App",
+    'tailwind',
+    'theme',
+    'django_browser_reload',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -47,6 +51,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_browser_reload.middleware.BrowserReloadMiddleware",
 ]
 
 ROOT_URLCONF = "App.urls"
@@ -107,9 +112,9 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 
 USE_I18N = True
-
+NPM_BIN_PATH = "C:/Program Files/nodejs/npm.cmd"
 USE_TZ = True
-
+TAILWIND_APP_NAME = "theme"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

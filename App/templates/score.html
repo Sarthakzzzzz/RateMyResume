@@ -9,14 +9,20 @@
     <main>
       <h1>Upload your resume to get a score</h1>
       <form
-        action="{% url 'score' %}"
+        action="{% url 'upload_resume' %}"
         method="post"
         enctype="multipart/form-data"
       >
         {% csrf_token %}
         <input type="file" name="resume" accept=".pdf,.doc,.docx" required />
-        <button type="submit">Get Score</button>
+        <button type="submit">File Upload</button>
+        {% if message %}
+        <p>{{ message }}</p>
+        {% endif %} {% if filename %}
+        <p>Uploaded file: {{ filename }}</p>
+        {% endif %}
       </form>
     </main>
   </body>
 </html>
+<!-- This HTML template allows users to upload their resumes and displays a message upon successful upload. -->
