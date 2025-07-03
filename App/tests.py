@@ -16,3 +16,8 @@ class testUrls(SimpleTestCase):
         response = self.client.get('/admin/')
         # Redirect to login page if not logged in
         self.assertEqual(response.status_code, 302)
+
+    def test_analyze_url(self):
+        response = self.client.get('/score/analyze/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'analyze.html')

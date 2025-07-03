@@ -1,0 +1,15 @@
+{% extends "score.html" %} {% block content %}
+<h1>Resume Analysis</h1>
+<h2>Input Text</h2>
+<p>{{ input_text }}</p>
+
+<h2>Named Entities</h2>
+{% if entities %}
+<ul>
+  {% for text, label in entities %}
+  <li><strong>{{ label }}</strong>: {{ text }}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No entities found.</p>
+{% endif %} {% endblock %}

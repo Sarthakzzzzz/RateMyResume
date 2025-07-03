@@ -3,9 +3,18 @@
 # it defines the main view for the application.
 from django.http import HttpResponse
 from django.template import loader
+
+
 def Home(request):
-        template = loader.get_template("index.html")
-        return HttpResponse(template.render(request=request))
+    template = loader.get_template("index.html")
+    return HttpResponse(template.render(request=request))
+
+
 def score(request):
-        template = loader.get_template("score.html")
-        return HttpResponse(template.render(request=request))
+    template = loader.get_template("score.html")
+    return HttpResponse(template.render(request=request))
+
+
+def analyze(request):
+    template = loader.get_template("analyze.html")
+    return HttpResponse(template.render(request=request))
