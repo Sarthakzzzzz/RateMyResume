@@ -7,6 +7,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", views.Home, name="home"),
     path("score/", views.score, name="score"),
-    path("score/upload/", views.upload_resume, name="upload_resume"),
+    path("score/upload/", views.save_uploaded_resume, name="upload_resume"),
+    path("score/upload/analyze/", views.rating_result, name="rating_result"),
     path("__reload__/", include("django_browser_reload.urls")),
 ]

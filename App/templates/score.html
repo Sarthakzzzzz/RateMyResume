@@ -1,3 +1,4 @@
+<!-- filepath: d:\RateMyResume\App\templates\score.html -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -7,6 +8,7 @@
   </head>
   <body>
     <main>
+      {% block content %}
       <h1>Upload your resume to get a score</h1>
       <form
         action="{% url 'upload_resume' %}"
@@ -22,7 +24,12 @@
         <p>Uploaded file: {{ filename }}</p>
         {% endif %}
       </form>
+
+      {% if resume %}
+      <form action="{% url 'rating_result' %}" method="get">
+        <button type="submit">Analyze</button>
+      </form>
+      {% endif %} {% endblock %}
     </main>
   </body>
 </html>
-<!-- This HTML template allows users to upload their resumes and displays a message upon successful upload. -->
