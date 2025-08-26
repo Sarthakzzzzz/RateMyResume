@@ -7,7 +7,7 @@ from django.shortcuts import render
 from .models.resume import Resume
 from .models.recieve import extract_text_from_pdf, extract_text_from_docx
 import os
-from App.utils.rating import rate_resume
+from App.utils.rating import calculate_resume_score
 
 
 def Home(request):
@@ -43,18 +43,28 @@ def save_uploaded_resume(request):
 
 
 def rating_result(request):
-    # Get the latest uploaded resume
     resume = Resume.objects.order_by('-uploaded_at').first()
+    rating_res = {}
+    score = None
+    found_keywords = []
+
     if resume:
-        rating_res = rate_resume(resume.text)
-        score = rating_res['score']
-        found_keywords = list(
-            set(rating_res["found_keywords"]))  # Unique keywords
-    else:
-        score = None
-        found_keywords = []
+        # Run scoring
+        rating_res = calculate_resume_score(resume.text)
+        score = rating_res.get("final_score", 0)
+
+        # Collect only keyword-like items (avoid full sentences)
+        for section in ["projects", "achievements", "certifications", "leadership_roles"]:
+            items = rating_res.get(section, [])
+            found_keywords.extend(
+                [kw for kw in items if isinstance(
+                    kw, str) and len(kw.split()) <= 4]
+            )
+        found_keywords = list(set(found_keywords))
+
     return render(request, "analyze.html", {
         "resume": resume,
         "score": score,
-        "found_keywords": found_keywords
+        "found_keywords": found_keywords,
+        "details": rating_res
     })

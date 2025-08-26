@@ -1,4 +1,3 @@
-<!-- filepath: d:\RateMyResume\App\templates\analyze.html -->
 {% extends "score.html" %} {% block content %}
 <h1>Upload your resume to get a score</h1>
 <form
@@ -10,9 +9,77 @@
   <input type="file" name="resume" accept=".pdf,.doc,.docx" required />
   <button type="submit">File Upload</button>
 </form>
-{% if score %}
-<h2>Resume Score: {{ score }}/100</h2>
-<p>Matched Keywords: {{ found_keywords|join:", " }}</p>
+
+{% if score is not None %}
+<h2>Details</h2>
+
+<p><strong>Resume Score:</strong> {{ score }}/100</p>
+<p><strong>Grammar Issues:</strong> {{ details.grammar_issues|default:"0" }}</p>
+
+<h3>Experience</h3>
+<ul>
+  {% for exp in details.experience_entries %}
+  <li>{{ exp }}</li>
+  {% empty %}
+  <li>No experience found</li>
+  {% endfor %}
+</ul>
+
+<h3>Projects</h3>
+<ul>
+  {% for proj in details.projects %}
+  <li>{{ proj }}</li>
+  {% empty %}
+  <li>No projects found</li>
+  {% endfor %}
+</ul>
+
+<h3>Achievements</h3>
+<ul>
+  {% for ach in details.achievements %}
+  <li>{{ ach }}</li>
+  {% empty %}
+  <li>No achievements found</li>
+  {% endfor %}
+</ul>
+
+<h3>Certifications</h3>
+<ul>
+  {% for cert in details.certifications %}
+  <li>{{ cert }}</li>
+  {% empty %}
+  <li>No certifications found</li>
+  {% endfor %}
+</ul>
+
+<h3>Leadership Roles</h3>
+<ul>
+  {% for leader in details.leadership_roles %}
+  <li>{{ leader }}</li>
+  {% empty %}
+  <li>No leadership roles found</li>
+  {% endfor %}
+</ul>
+
+<h3>Education</h3>
+{% if details.education_info.degrees %}
+<ul>
+  {% for degree in details.education_info.degrees %}
+  <li>{{ degree }}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No education info found</p>
+{% endif %}
+
+<h3>Red Flags</h3>
+<ul>
+  {% for flag in details.red_flags %}
+  <li>{{ flag }}</li>
+  {% empty %}
+  <li>No red flags found</li>
+  {% endfor %}
+</ul>
 {% else %}
 <p>No resume analyzed yet.</p>
 {% endif %} {% endblock %}
