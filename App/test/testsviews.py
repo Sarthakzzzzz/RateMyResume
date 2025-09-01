@@ -16,7 +16,6 @@ class TestViewResolution(SimpleTestCase):
             return reverse(name)
         except NoReverseMatch:
             return fallback
-
     def _get_view_attr(self, attr_name):
         return getattr(views, attr_name, None)
 

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Resume Analyzer Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .hero { text-align: center; padding: 60px 20px; color: white; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .hero p { font-size: 1.3rem; margin-bottom: 40px; opacity: 0.9; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .upload-section { background: white; border-radius: 20px; padding: 50px; margin: 40px auto; max-width: 800px; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
+        .form-group { margin-bottom: 30px; }
+        .form-group label { display: block; margin-bottom: 10px; font-weight: 600; color: #2c3e50; font-size: 1.1rem; }
+        .file-upload { position: relative; display: block; width: 100%; padding: 30px; border: 3px dashed #bdc3c7; border-radius: 15px; background: #f8f9fa; text-align: center; cursor: pointer; transition: all 0.3s ease; }
+        .file-upload:hover { border-color: #3498db; background: #e3f2fd; transform: translateY(-2px); }
+        .file-upload input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+        .upload-icon { font-size: 3rem; color: #3498db; margin-bottom: 15px; }
+        .upload-text { font-size: 1.2rem; color: #34495e; margin-bottom: 10px; }
+        .upload-hint { color: #7f8c8d; font-size: 0.9rem; }
+        .position-select { width: 100%; padding: 15px 20px; border: 2px solid #ecf0f1; border-radius: 10px; font-size: 1.1rem; background: white; }
+        .position-select:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1); }
+        .analyze-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+        .analyze-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(52, 152, 219, 0.3); }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin: 60px 0; }
+        .feature-card { background: rgba(255,255,255,0.95); padding: 40px 30px; border-radius: 20px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.1); transition: transform 0.3s ease; }
+        .feature-card:hover { transform: translateY(-10px); }
+        .feature-icon { font-size: 3.5rem; margin-bottom: 20px; }
+        .feature-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 15px; color: #2c3e50; }
+        .feature-desc { color: #7f8c8d; line-height: 1.6; }
+        .stats-section { background: rgba(255,255,255,0.1); padding: 50px 0; margin: 60px 0; border-radius: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; text-align: center; }
+        .stat-item { color: white; }
+        .stat-number { display: block; font-size: 3rem; font-weight: bold; margin-bottom: 10px; }
+        .stat-label { font-size: 1.1rem; opacity: 0.9; }
+        .error { background: #e74c3c; color: white; padding: 20px; border-radius: 10px; margin-bottom: 30px; text-align: center; }
+        .demo-section { background: white; padding: 50px; border-radius: 20px; margin: 40px 0; }
+        .demo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 30px; }
+        .demo-card { border: 2px solid #ecf0f1; border-radius: 15px; padding: 25px; transition: all 0.3s ease; }
+        .demo-card:hover { border-color: #3498db; box-shadow: 0 5px 15px rgba(52, 152, 219, 0.1); }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="container">
+            <h1>🎯 Professional Resume Analyzer</h1>
+            <p>Get comprehensive insights with AI-powered analysis, visual dashboards, and actionable recommendations</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="upload-section">
+            {% if error %}
+                <div class="error">
+                    <strong>Error:</strong> {{ error }}
+                </div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" action="{% url 'comprehensive_analysis' %}">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="resume">📄 Upload Your Resume</label>
+                    <div class="file-upload">
+                        <input type="file" id="resume" name="resume" accept=".pdf,.docx" required>
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">Click to browse or drag & drop your resume</div>
+                        <div class="upload-hint">Supports PDF and DOCX files (Max 10MB)</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="position">🎯 Select Target Position</label>
+                    <select id="position" name="position" class="position-select" required>
+                        <option value="software_engineer">💻 Software Engineer</option>
+                        <option value="data_scientist">📊 Data Scientist</option>
+                        <option value="product_manager">🎯 Product Manager</option>
+                        <option value="marketing_manager">📈 Marketing Manager</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="analyze-btn">
+                    🚀 Generate Comprehensive Analysis
+                </button>
+            </form>
+        </div>
+
+        <div class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">15+</span>
+                    <span class="stat-label">Analysis Metrics</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">8</span>
+                    <span class="stat-label">Visual Charts</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">4</span>
+                    <span class="stat-label">Job Positions</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">Actionable Insights</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">Advanced Analytics</div>
+                <div class="feature-desc">
+                    Get detailed scoring across 15+ metrics including skills matching, experience analysis, and content quality assessment.
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <div class="feature-title">Position-Based Scoring</div>
+                <div class="feature-desc">
+                    Tailored analysis for specific roles with weighted scoring based on industry requirements and expectations.
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📈</div>
+                <div class="feature-title">Visual Dashboards</div>
+                <div class="feature-desc">
+                    Interactive charts including gauge meters, radar plots, heatmaps, and progress bars for easy understanding.
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">💡</div>
+                <div class="feature-title">Smart Recommendations</div>
+                <div class="feature-desc">
+                    AI-powered suggestions categorized by priority with specific actions to improve your resume's effectiveness.
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <div class="feature-title">Skills Gap Analysis</div>
+                <div class="feature-desc">
+                    Identify missing required and preferred skills for your target position with improvement roadmap.
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">Instant Results</div>
+                <div class="feature-desc">
+                    Get comprehensive analysis in seconds with downloadable reports and actionable insights.
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2 style="text-align: center; margin-bottom: 20px; color: #2c3e50;">What You'll Get</h2>
+            <div class="demo-grid">
+                <div class="demo-card">
+                    <h3>📊 Overall Score & Grade</h3>
+                    <p>Comprehensive scoring with letter grades (A+ to D) based on industry standards and position requirements.</p>
+                </div>
+                <div class="demo-card">
+                    <h3>🎯 Skills Matching</h3>
+                    <p>Detailed analysis of required vs preferred skills with percentage matching and gap identification.</p>
+                </div>
+                <div class="demo-card">
+                    <h3>📈 Visual Charts</h3>
+                    <p>8 different chart types including gauges, radar plots, heatmaps, and progress bars for clear insights.</p>
+                </div>
+                <div class="demo-card">
+                    <h3>💡 Prioritized Suggestions</h3>
+                    <p>Categorized recommendations (Critical, Important, Nice-to-Have) with specific improvement actions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // File upload enhancement
+        const fileInput = document.getElementById('resume');
+        const uploadArea = document.querySelector('.file-upload');
+        
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const fileName = e.target.files[0].name;
+                uploadArea.querySelector('.upload-text').textContent = `Selected: ${fileName}`;
+                uploadArea.style.borderColor = '#27ae60';
+                uploadArea.style.backgroundColor = '#d5f4e6';
+            }
+        });
+
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#3498db';
+            uploadArea.style.backgroundColor = '#e3f2fd';
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#bdc3c7';
+            uploadArea.style.backgroundColor = '#f8f9fa';
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                const fileName = files[0].name;
+                uploadArea.querySelector('.upload-text').textContent = `Selected: ${fileName}`;
+                uploadArea.style.borderColor = '#27ae60';
+                uploadArea.style.backgroundColor = '#d5f4e6';
+            }
+        });
+    </script>
+</body>
+</html>

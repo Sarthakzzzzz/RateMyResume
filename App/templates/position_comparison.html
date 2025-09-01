@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Position Comparison</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #2c3e50; margin-bottom: 10px; }
+        .comparison-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .position-card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .position-card:hover { transform: translateY(-5px); }
+        .position-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 15px; color: #2c3e50; }
+        .score-display { text-align: center; margin-bottom: 20px; }
+        .score-number { font-size: 2.5rem; font-weight: bold; display: block; }
+        .grade { font-size: 1.2rem; color: #7f8c8d; margin-top: 5px; }
+        .skills-stats { margin-top: 15px; }
+        .skill-stat { display: flex; justify-content: space-between; margin-bottom: 8px; padding: 8px; background: #f8f9fa; border-radius: 5px; }
+        .skill-label { font-weight: 500; }
+        .skill-value { font-weight: bold; }
+        .grade-a { color: #27ae60; } .grade-b { color: #f39c12; } .grade-c { color: #e74c3c; } .grade-d { color: #c0392b; }
+        .best-match { border: 3px solid #27ae60; position: relative; }
+        .best-match::before { content: "🏆 Best Match"; position: absolute; top: -15px; left: 20px; background: #27ae60; color: white; padding: 5px 15px; border-radius: 15px; font-size: 0.9rem; font-weight: bold; }
+        .summary-card { background: white; border-radius: 15px; padding: 30px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .recommendation { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin-top: 20px; }
+        .actions { text-align: center; margin-top: 30px; }
+        .btn { display: inline-block; padding: 12px 24px; margin: 0 10px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: transform 0.2s; }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-secondary { background: #95a5a6; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Position Comparison Analysis</h1>
+            <p>See how your resume performs across different roles</p>
+        </div>
+        
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% else %}
+            <div class="summary-card">
+                <h2>📄 Resume: {{ resume.filename }}</h2>
+                <p>Your resume has been analyzed against 4 different positions. Here's how you stack up:</p>
+                
+                <div class="recommendation">
+                    <h3>🎯 Recommendation</h3>
+                    <p>Based on your current resume analysis across multiple positions.</p>
+                </div>
+            </div>
+            
+            <div class="comparison-grid">
+                {% for position, data in comparisons.items %}
+                    <div class="position-card {% if data.score >= 80 %}best-match{% endif %}">
+                        <div class="position-title">
+                            {% if position == 'software_engineer' %}💻 Software Engineer
+                            {% elif position == 'data_scientist' %}📊 Data Scientist
+                            {% elif position == 'product_manager' %}🎯 Product Manager
+                            {% elif position == 'marketing_manager' %}📈 Marketing Manager
+                            {% endif %}
+                        </div>
+                        
+                        <div class="score-display">
+                            <span class="score-number grade-{{ data.grade|slice:':1'|lower }}">{{ data.score|floatformat:1 }}%</span>
+                            <div class="grade">Grade: {{ data.grade }}</div>
+                        </div>
+                        
+                        <div class="skills-stats">
+                            <div class="skill-stat">
+                                <span class="skill-label">Required Skills Match:</span>
+                                <span class="skill-value">{{ data.required_skills_match|floatformat:1 }}%</span>
+                            </div>
+                            <div class="skill-stat">
+                                <span class="skill-label">Preferred Skills Match:</span>
+                                <span class="skill-value">{{ data.preferred_skills_match|floatformat:1 }}%</span>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 15px;">
+                            <a href="{% url 'enhanced_analysis' %}?position={{ position }}" class="btn btn-primary" style="font-size: 0.9rem; padding: 8px 16px;">
+                                View Detailed Analysis
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div class="summary-card">
+                <h2>📈 Analysis Summary</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px;">
+                    {% for position, data in comparisons.items %}
+                        <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                            <div style="font-weight: bold; margin-bottom: 5px;">
+                                {{ position|title|cut:"_" }}
+                            </div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #3498db;">
+                                {{ data.score|floatformat:1 }}%
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #e8f4fd; border-radius: 8px;">
+                    <h4>💡 Quick Tips:</h4>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <li>Focus on improving skills for your target position</li>
+                        <li>Add relevant projects and experience</li>
+                        <li>Tailor your resume keywords to match job requirements</li>
+                        <li>Consider getting certifications for your chosen field</li>
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+        
+        <div class="actions">
+            <a href="{% url 'enhanced_analysis' %}" class="btn btn-primary">🔄 Analyze New Resume</a>
+            <a href="{% url 'Home' %}" class="btn btn-secondary">🏠 Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>

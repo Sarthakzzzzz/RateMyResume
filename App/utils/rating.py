@@ -1,17 +1,14 @@
 import re
 import spacy
 import language_tool_python
+from collections import Counter
 
 # Load spaCy model and grammar tool
 nlp = spacy.load("en_core_web_sm")
-try:
-    tool = language_tool_python.LanguageToolPublicAPI('en-US')
-except Exception:
-    # Fallback stub to avoid import-time failures (tests / offline environments)
-    class _ToolStub:
-        def check(self, text):
-            return []
-    tool = _ToolStub()
+class _ToolStub:
+    def check(self, text):
+        return []
+tool = _ToolStub()  # Disable grammar checking to avoid rate limits
 
 
 def normalize_text(text):
@@ -27,36 +24,45 @@ def get_personal_info(resume_text: str) -> dict:
         "email": "",
         "phone": "",
         "address": "",
-        "links": ""
+        "links": []
     }
 
-    email = re.search(
-        r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', resume_text)
-    phone = re.search(r'\+?\d[\d\s\-]{8,}\d', resume_text)
-    address = re.search(r'\d{1,5}\s\w+\s\w+,\s\w+,\s\w+\s\d{5}', resume_text)
-    link = re.search(r'(https?://[^\s]+)', resume_text)
+    # Enhanced email detection
+    emails = re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', resume_text)
+    if emails:
+        personal_info["email"] = emails[0]
 
-    if email:
-        personal_info["email"] = email.group(0)
-    if phone:
-        personal_info["phone"] = phone.group(0)
-    if address:
-        personal_info["address"] = address.group(0)
-    if link:
-        personal_info["links"] = link.group(0)
+    # Enhanced phone detection
+    phones = re.findall(r'(?:\+?1[-\s]?)?\(?[0-9]{3}\)?[-\s]?[0-9]{3}[-\s]?[0-9]{4}', resume_text)
+    if phones:
+        personal_info["phone"] = phones[0]
 
+    # Enhanced links detection
+    links = re.findall(r'(https?://[^\s]+|linkedin\.com/[^\s]+|github\.com/[^\s]+)', resume_text, re.IGNORECASE)
+    personal_info["links"] = links
+
+    # Name extraction
     for ent in doc.ents:
-        if ent.label_ == "PERSON":
+        if ent.label_ == "PERSON" and len(ent.text.split()) >= 2:
             personal_info["name"] = ent.text
             break
 
     if not personal_info["name"]:
-        name_guess = re.search(r'([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)', resume_text)
-        if name_guess:
-            personal_info["name"] = name_guess.group(0)
+        lines = resume_text.split('\n')[:5]
+        for line in lines:
+            name_match = re.search(r'^([A-Z][a-z]+(?:\s[A-Z][a-z]+)+)', line.strip())
+            if name_match:
+                personal_info["name"] = name_match.group(0)
+                break
 
-    score = 10 if all(personal_info.values()) else -10
-    return score
+    # Scoring
+    score = 0
+    if personal_info["name"]: score += 3
+    if personal_info["email"]: score += 3
+    if personal_info["phone"]: score += 2
+    if personal_info["links"]: score += 2
+    
+    return {"score": score, "info": personal_info}
 
 
 # ----------- 2. Grammar + Length Scoring -----------
@@ -95,16 +101,38 @@ def extract_sections(resume_text: str) -> dict:
 # ----------- 4. Tech Skills Scoring -----------
 
 def tech_skills_score(resume_text: str) -> dict:
-    sections = extract_sections(resume_text)
-    doc = nlp(resume_text)
-
-    orgs = [ent.text for ent in doc.ents if ent.label_ == "ORG"]
-    if orgs:
-        sections.setdefault("organizations", []).extend(orgs)
-
-    score = sum(len(items) for items in sections.values()) * 2
-    sections["score"] = score
-    return sections
+    text_lower = resume_text.lower()
+    
+    # Comprehensive skill categories
+    skill_categories = {
+        "programming": ["python", "java", "javascript", "c++", "c#", "go", "rust", "swift", "kotlin", "php", "ruby", "scala", "r", "matlab"],
+        "web": ["html", "css", "react", "angular", "vue", "node.js", "express", "django", "flask", "spring", "laravel"],
+        "database": ["sql", "mysql", "postgresql", "mongodb", "redis", "elasticsearch", "oracle", "sqlite"],
+        "cloud": ["aws", "azure", "gcp", "docker", "kubernetes", "terraform", "jenkins", "gitlab", "github actions"],
+        "data_science": ["pandas", "numpy", "scikit-learn", "tensorflow", "pytorch", "keras", "matplotlib", "seaborn", "tableau", "power bi"],
+        "tools": ["git", "jira", "confluence", "slack", "trello", "figma", "photoshop", "excel", "powerpoint"]
+    }
+    
+    found_skills = {}
+    total_score = 0
+    
+    for category, skills in skill_categories.items():
+        found_skills[category] = []
+        for skill in skills:
+            if skill in text_lower:
+                found_skills[category].append(skill)
+                total_score += 2 if category in ["programming", "database"] else 1
+    
+    # Bonus for skill diversity
+    categories_with_skills = sum(1 for skills in found_skills.values() if skills)
+    if categories_with_skills >= 4:
+        total_score += 5
+    
+    return {
+        "score": min(20, total_score),
+        "skills_by_category": found_skills,
+        "total_skills_found": sum(len(skills) for skills in found_skills.values())
+    }
 
 
 # ----------- 5. Education Section Extraction -----------
@@ -233,16 +261,37 @@ def extract_leadership_roles(resume_text: str) -> dict:
 def detect_red_flags(resume_text: str) -> list:
     red_flags = []
     text = normalize_text(resume_text)
-
-    if len(resume_text.split()) < 100:
-        red_flags.append("Resume is too short.")
-    if not re.search(r'\b(managed|developed|built|led|created|analyzed|designed|initiated|collaborated|implemented)\b', text):
-        red_flags.append("Lacks strong action verbs.")
-    if not re.search(r'\b(python|java|sql|git|aws|docker|react|tensorflow|linux)\b', text):
-        red_flags.append("Missing common tech stack mentions.")
-    if not re.search(r'\b(experience|project|certification|education|internship)\b', text):
-        red_flags.append("Missing major resume sections.")
-
+    word_count = len(resume_text.split())
+    
+    # Length issues
+    if word_count < 150:
+        red_flags.append("Resume too short (< 150 words)")
+    elif word_count > 800:
+        red_flags.append("Resume too long (> 800 words)")
+    
+    # Action verbs
+    action_verbs = ["managed", "developed", "built", "led", "created", "analyzed", "designed", 
+                   "initiated", "collaborated", "implemented", "achieved", "improved", "optimized"]
+    if not any(verb in text for verb in action_verbs):
+        red_flags.append("Lacks strong action verbs")
+    
+    # Quantifiable achievements
+    if not re.search(r'\b\d+%|\$\d+|\d+\s*(users|customers|projects|years)', text):
+        red_flags.append("Missing quantified achievements")
+    
+    # Contact information
+    if not re.search(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', resume_text):
+        red_flags.append("Missing email address")
+    
+    # Grammar issues (basic)
+    grammar_issues = tool.check(resume_text[:500])  # Check first 500 chars for performance
+    if len(grammar_issues) > 3:
+        red_flags.append(f"Multiple grammar issues detected ({len(grammar_issues)})")
+    
+    # Formatting issues
+    if resume_text.count('\n\n') < 2:
+        red_flags.append("Poor formatting - lacks proper spacing")
+    
     return red_flags
 
 # ---------- Calculate Resume Score --------
@@ -252,111 +301,82 @@ def calculate_resume_score(resume_text: str) -> dict:
     final_score = 0
     details = {}
 
-    # 1. Personal Info
-    personal_score = get_personal_info(resume_text)
+    # 1. Personal Info (0-10 points)
+    personal_result = get_personal_info(resume_text)
+    personal_score = personal_result["score"]
     details["personal_info_score"] = personal_score
+    details["personal_info"] = personal_result["info"]
     final_score += personal_score
 
-    # 2. Grammar Score
-    grammar_issues = tool.check(resume_text)
-    grammar_penalty = len(grammar_issues)
-    details["grammar_issues"] = grammar_penalty
-    final_score -= grammar_penalty
-
-    # 3. Length Bonus
-    lines = resume_text.split("\n")
-    if len(lines) > 30:
-        final_score += 5
-        details["length_bonus"] = 5
-    elif len(lines) < 10:
-        final_score -= 5
-        details["length_penalty"] = -5
-
-    # 4. Experience
+    # 2. Experience (0-15 points)
     exp = extract_experience(resume_text)
-    exp_score = min(10, exp["years_of_experience_estimate"] * 2)
-    final_score += exp_score
+    exp_score = min(15, len(exp["experience_entries"]) * 2)
     details["experience_score"] = exp_score
     details["experience_entries"] = exp["experience_entries"]
+    final_score += exp_score
 
-    # 5. Projects
+    # 3. Technical Skills (0-20 points)
+    tech = tech_skills_score(resume_text)
+    tech_score = tech["score"]
+    details["tech_skills_score"] = tech_score
+    details["tech_skills"] = tech
+    final_score += tech_score
+
+    # 4. Projects (0-10 points)
     proj = extract_projects(resume_text)
-    proj_score = min(10, proj["project_count"] * 2)
-    final_score += proj_score
-    details["projects_score"] = proj_score
+    proj_score = min(10, proj["project_count"] * 3)
+    details["project_score"] = proj_score
     details["projects"] = proj["projects"]
+    final_score += proj_score
 
-    # 6. Achievements
+    # 5. Education (0-8 points)
+    edu = extract_education_section(resume_text)
+    edu_score = min(8, len(edu["degrees"]) * 4 + len(edu["universities"]) * 2)
+    details["education_score"] = edu_score
+    details["education"] = edu
+    final_score += edu_score
+
+    # 6. Achievements (0-8 points)
     ach = extract_achievements(resume_text)
-    ach_score = min(5, ach["count"] * 1)
-    final_score += ach_score
+    ach_score = min(8, ach["count"] * 2)
     details["achievements_score"] = ach_score
     details["achievements"] = ach["achievements"]
+    final_score += ach_score
 
-    # 7. Certifications
+    # 7. Certifications (0-6 points)
     cert = extract_certifications(resume_text)
-    cert_score = min(5, cert["count"] * 1)
-    final_score += cert_score
+    cert_score = min(6, cert["count"] * 2)
     details["certifications_score"] = cert_score
     details["certifications"] = cert["certifications"]
+    final_score += cert_score
 
-    # 8. Leadership
-    leader = extract_leadership_roles(resume_text)
-    leader_score = min(5, leader["count"] * 2)
-    final_score += leader_score
-    details["leadership_score"] = leader_score
-    details["leadership_roles"] = leader["leadership_roles"]
+    # 8. Leadership (0-5 points)
+    lead = extract_leadership_roles(resume_text)
+    lead_score = min(5, lead["count"] * 2)
+    details["leadership_score"] = lead_score
+    details["leadership_roles"] = lead["leadership_roles"]
+    final_score += lead_score
 
-    # 9. Education
-    edu = extract_education_section(resume_text)
-    edu_score = 5 if edu["degrees"] else 0
-    final_score += edu_score
-    details["education_score"] = edu_score
-    details["education_info"] = edu
+    # 9. Content Quality (0-8 points)
+    word_count = len(resume_text.split())
+    quality_score = 0
+    if 200 <= word_count <= 600: quality_score += 3
+    if re.search(r'\b\d+%|\$\d+|\d+\s*(users|customers|projects|years)', resume_text): quality_score += 3
+    if len(resume_text.split('\n')) > 15: quality_score += 2
+    details["content_quality_score"] = quality_score
+    final_score += quality_score
 
-    # 10. Technical Skills
-    tech = tech_skills_score(resume_text)
-    tech_score = min(10, tech["score"])
-    final_score += tech_score
-    details["tech_skills_score"] = tech_score
-    details["tech_sections"] = {k: v for k, v in tech.items() if k != "score"}
-
-    # 11. Red Flags
+    # 10. Red Flags (penalties)
     red_flags = detect_red_flags(resume_text)
-    red_flag_penalty = len(red_flags) * 3
-    final_score -= red_flag_penalty
+    red_flag_penalty = len(red_flags) * 2
     details["red_flags"] = red_flags
-    details["red_flag_penalty"] = -red_flag_penalty
+    details["red_flag_penalty"] = red_flag_penalty
+    final_score -= red_flag_penalty
 
-    # 12. Extra / Unknown Content Penalty
-    known_sections = ["experience", "projects", "achievements", "certifications",
-                      "education", "skills", "personal", "summary", "leadership"]
-    extra_sections = []
-    for line in resume_text.lower().split('\n'):
-        if ":" in line:
-            section_name = line.split(":")[0].strip()
-            if section_name not in known_sections and len(section_name) < 25:
-                extra_sections.append(section_name)
-    extra_penalty = len(set(extra_sections))
-    final_score -= extra_penalty
-    details["extra_sections_penalty"] = -extra_penalty
-    details["unrecognized_sections"] = list(set(extra_sections))
-
-    # 13. Bonus: Balanced Sections
-    section_diversity = len([
-        s for s in [
-            exp["experience_entries"],
-            proj["projects"],
-            ach["achievements"],
-            cert["certifications"],
-            edu["education_entries"]
-        ] if s
-    ])
-    if section_diversity >= 4:
-        final_score += 5
-        details["balance_bonus"] = 5
-
-    # 14. Final Score Normalization
-    final_score = max(0, min(100, final_score))
-    details["final_score"] = final_score
+    # Final calculations
+    max_score = 90  # 10+15+20+10+8+8+6+5+8 = 90
+    details["final_score"] = max(0, min(max_score, final_score))
+    details["max_possible_score"] = max_score
+    details["percentage"] = (details["final_score"] / max_score) * 100
+    
     return details
