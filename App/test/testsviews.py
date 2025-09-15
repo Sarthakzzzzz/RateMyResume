@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 from django.urls import reverse, resolve, NoReverseMatch
-import App.views as views
+import App.views_enhanced as views
 import os
 import django
 
@@ -16,6 +16,7 @@ class TestViewResolution(SimpleTestCase):
             return reverse(name)
         except NoReverseMatch:
             return fallback
+
     def _get_view_attr(self, attr_name):
         return getattr(views, attr_name, None)
 

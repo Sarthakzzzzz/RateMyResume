@@ -1,6 +1,7 @@
 from django.test import SimpleTestCase
 from django.urls import reverse, resolve, NoReverseMatch
-import App.views as views
+import App.views_dashboard as views
+import App.views_enhanced as views_main
 import os
 import django
 
