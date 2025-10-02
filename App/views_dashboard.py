@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from .models.resume import Resume
 from .models.recieve import extract_text_from_pdf, extract_text_from_docx
-from .utils.dashboard_generator import ResumeDashboard
+from .utils.dashgen import ResumeDashboard
 import os
 
 def dashboard_home(request):

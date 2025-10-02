@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Resume Analysis Results</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8">Resume Analysis Results</h1>
+        
+        <!-- Overall Score -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="text-center">
+                <h2 class="text-2xl font-semibold mb-4">Overall Score</h2>
+                <div class="text-6xl font-bold text-blue-600 mb-2">
+                    {{ analysis.position_score.weighted_score }}%
+                </div>
+                <div class="text-xl text-gray-600 mb-2">
+                    Grade: <span class="font-semibold">{{ analysis.position_score.grade }}</span>
+                </div>
+                <div class="text-lg text-gray-500">
+                    Position: {{ position }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Section -->
+        {% if charts %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {% if charts.gauge %}
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Score Gauge</h3>
+                <img src="data:image/png;base64,{{ charts.gauge }}" alt="Score Gauge" class="w-full">
+            </div>
+            {% endif %}
+            
+            {% if charts.pie %}
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Score Breakdown</h3>
+                <img src="data:image/png;base64,{{ charts.pie }}" alt="Score Breakdown" class="w-full">
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Skills Analysis -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4">Skills Analysis</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600">{{ analysis.skills_analysis.required_found|length }}</div>
+                    <div class="text-sm text-gray-600">Required Found</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-red-600">{{ analysis.skills_analysis.required_missing|length }}</div>
+                    <div class="text-sm text-gray-600">Required Missing</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">{{ analysis.skills_analysis.preferred_found|length }}</div>
+                    <div class="text-sm text-gray-600">Preferred Found</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-gray-600">{{ analysis.skills_analysis.preferred_missing|length }}</div>
+                    <div class="text-sm text-gray-600">Preferred Missing</div>
+                </div>
+            </div>
+            
+            {% if analysis.skills_analysis.required_missing %}
+            <div class="mt-4">
+                <h4 class="font-semibold text-red-600 mb-2">Missing Required Skills:</h4>
+                <div class="flex flex-wrap gap-2">
+                    {% for skill in analysis.skills_analysis.required_missing %}
+                    <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Advanced Analysis -->
+        {% if analysis.advanced %}
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4">Advanced Analysis</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="text-center p-4 bg-blue-50 rounded">
+                    <div class="text-xl font-bold text-blue-600">{{ analysis.advanced.final_score.final_score }}%</div>
+                    <div class="text-sm text-gray-600">Final Score</div>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded">
+                    <div class="text-xl font-bold text-green-600">{{ analysis.advanced.ats_analysis.total_score }}%</div>
+                    <div class="text-sm text-gray-600">ATS Score</div>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded">
+                    <div class="text-xl font-bold text-purple-600">{{ analysis.advanced.semantic_analysis.similarity_score|floatformat:1 }}%</div>
+                    <div class="text-sm text-gray-600">Job Match</div>
+                </div>
+                <div class="text-center p-4 bg-orange-50 rounded">
+                    <div class="text-xl font-bold text-orange-600">{{ analysis.advanced.skill_analysis.total_skills }}</div>
+                    <div class="text-sm text-gray-600">Skills Found</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Suggestions -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4">Improvement Suggestions</h2>
+            
+            {% for priority, items in analysis.suggestions.items %}
+            {% if items %}
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold mb-3 
+                    {% if priority == 'critical' %}text-red-600
+                    {% elif priority == 'important' %}text-orange-600
+                    {% else %}text-blue-600{% endif %}">
+                    {{ priority|title }} Priority
+                </h3>
+                <div class="space-y-3">
+                    {% for item in items %}
+                    <div class="border-l-4 pl-4 
+                        {% if priority == 'critical' %}border-red-500 bg-red-50
+                        {% elif priority == 'important' %}border-orange-500 bg-orange-50
+                        {% else %}border-blue-500 bg-blue-50{% endif %}">
+                        <div class="font-semibold">{{ item.category }}</div>
+                        <div class="text-gray-700">{{ item.issue }}</div>
+                        <div class="text-sm text-gray-600 mt-1">
+                            <strong>Action:</strong> {{ item.action }}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">
+                            Impact: {{ item.impact }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- Additional Charts -->
+        {% if charts.skills_bar or charts.radar %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {% if charts.skills_bar %}
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Skills Analysis</h3>
+                <img src="data:image/png;base64,{{ charts.skills_bar }}" alt="Skills Analysis" class="w-full">
+            </div>
+            {% endif %}
+            
+            {% if charts.radar %}
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Section Analysis</h3>
+                <img src="data:image/png;base64,{{ charts.radar }}" alt="Radar Chart" class="w-full">
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Navigation -->
+        <div class="text-center mt-8">
+            <a href="/enhanced/" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 mr-4">
+                Analyze Another Resume
+            </a>
+            <a href="/" class="text-blue-600 hover:text-blue-800">
+                Back to Home
+            </a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,7 +1,5 @@
 import re
 import spacy
-import language_tool_python
-from collections import Counter
 
 # Load spaCy model and grammar tool
 nlp = spacy.load("en_core_web_sm")
@@ -320,6 +318,7 @@ def calculate_resume_score(resume_text: str) -> dict:
     tech_score = tech["score"]
     details["tech_skills_score"] = tech_score
     details["tech_skills"] = tech
+    details["tech_sections"] = tech.get("skills_by_category", {})  # Only the dict, not the full object
     final_score += tech_score
 
     # 4. Projects (0-10 points)
@@ -334,6 +333,7 @@ def calculate_resume_score(resume_text: str) -> dict:
     edu_score = min(8, len(edu["degrees"]) * 4 + len(edu["universities"]) * 2)
     details["education_score"] = edu_score
     details["education"] = edu
+    details["education_info"] = edu  # Ensure key is always present for test compatibility
     final_score += edu_score
 
     # 6. Achievements (0-8 points)
@@ -373,10 +373,14 @@ def calculate_resume_score(resume_text: str) -> dict:
     details["red_flag_penalty"] = red_flag_penalty
     final_score -= red_flag_penalty
 
+    # Grammar issues (for test compatibility)
+    grammar_issues = tool.check(resume_text)
+    details["grammar_issues"] = len(grammar_issues)
+
     # Final calculations
     max_score = 90  # 10+15+20+10+8+8+6+5+8 = 90
     details["final_score"] = max(0, min(max_score, final_score))
     details["max_possible_score"] = max_score
     details["percentage"] = (details["final_score"] / max_score) * 100
-    
+
     return details

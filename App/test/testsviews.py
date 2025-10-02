@@ -21,15 +21,14 @@ class TestViewResolution(SimpleTestCase):
         return getattr(views, attr_name, None)
 
     def test_home_url_is_resolved(self):
-        path = self._try_reverse("home", "/")
-        view_obj = self._get_view_attr("Home")
-        if view_obj is None:
-            self.skipTest("Home view not defined in App.views")
+        path = self._try_reverse("Home", "/")
+        # Import dashboard_home from views_dashboard
+        from App.views_dashboard import dashboard_home
         try:
             resolved = resolve(path)
         except Exception:
-            self.skipTest(f"URL name 'home' not configured; tried path {path}")
-        self.assertEqual(resolved.func, view_obj)
+            self.skipTest(f"URL name 'Home' not configured; tried path {path}")
+        self.assertEqual(resolved.func, dashboard_home)
 
     def test_upload_resume_url_is_resolved(self):
         path = self._try_reverse("upload_resume", "/upload/")

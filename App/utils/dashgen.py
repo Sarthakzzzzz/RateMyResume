@@ -7,9 +7,7 @@ try:
 except ImportError:
     CHARTS_AVAILABLE = False
 # from wordcloud import WordCloud  # Removed due to installation issues
-import io
-import base64
-from .enhanced_analyzer import EnhancedResumeAnalyzer
+from .enhana import EnhancedResumeAnalyzer
 
 class ResumeDashboard:
     def __init__(self):

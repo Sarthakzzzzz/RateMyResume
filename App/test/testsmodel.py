@@ -6,13 +6,11 @@ from unittest.mock import patch
 from django.test import TestCase
 import django
 import os
-# configure Django settings for pytest import-time model access
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "RateMyResume.settings")
 django.setup()
 
 
 def _doc_with_ents(ents):
-    # ents: list of (text, label)
     ents_objs = [types.SimpleNamespace(
         text=t, label_=l, label=l) for t, l in ents]
     return types.SimpleNamespace(ents=ents_objs)
@@ -99,7 +97,6 @@ class ResumeModelComplexTest(TestCase):
         self.assertLessEqual(details["final_score"], 100)
         self.assertEqual(details.get("grammar_issues"), 2)
         self.assertIn("experience_entries", details)
-        # experience parsing can be fragile (bullets, unicode); ensure list present
         self.assertIsInstance(details["experience_entries"], list)
         # require either entries or a computed experience_score present
         self.assertTrue(len(details["experience_entries"]) >= 0)

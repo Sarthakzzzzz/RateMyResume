@@ -3,11 +3,10 @@ from django.template import loader
 from django.shortcuts import render
 from .models.resume import Resume
 from .models.recieve import extract_text_from_pdf, extract_text_from_docx
-from .utils.enhanced_analyzer import EnhancedResumeAnalyzer
-from .utils.advanced_analyzer import AdvancedResumeAnalyzer
-from .utils.advanced_analyzer import AdvancedResumeAnalyzer
+from .utils.enhana import EnhancedResumeAnalyzer
+from .utils.enhanced_ana import AdvancedResumeAnalyzer
+from .utils.enhanced_ana import AdvancedResumeAnalyzer
 import os
-import json
 
 def Home(request):
     template = loader.get_template("index.html")

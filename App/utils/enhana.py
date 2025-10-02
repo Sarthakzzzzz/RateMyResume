@@ -8,10 +8,7 @@ try:
     CHARTS_AVAILABLE = True
 except ImportError:
     CHARTS_AVAILABLE = False
-import re
 from .rating import *
-import io
-import base64
 
 class EnhancedResumeAnalyzer:
     def __init__(self):
