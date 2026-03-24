@@ -4,8 +4,8 @@ from django.shortcuts import render
 from .models.resume import Resume
 from .models.recieve import extract_text_from_pdf, extract_text_from_docx
 from .utils.enhana import EnhancedResumeAnalyzer
-from .utils.enhanced_ana import AdvancedResumeAnalyzer
-from .utils.enhanced_ana import AdvancedResumeAnalyzer
+from .utils.enchanced_paid import AdvancedResumeAnalyzer
+from .utils.enchanced_paid import AdvancedResumeAnalyzer
 import os
 
 def Home(request):
