@@ -33,10 +33,13 @@ jobs:
       - name: Download spaCy English model
         run: python -m spacy download en_core_web_sm
 
-      - name: Create .env (if needed)
+      - name: Create .env for CI
         run: |
-          echo "DJANGO_SECRET_KEY=temporarykey" > .env
-          echo "DJANGO_DEBUG=True" >> .env
+          echo "SECRET_KEY=temporary-ci-secret-key" > .env
+          echo "DEBUG=True" >> .env
+          echo "ALLOWED_HOSTS=127.0.0.1,localhost" >> .env
+          echo "NPM_BIN_PATH=npm" >> .env
+          echo "MEDIA_ROOT=media" >> .env
 
       - name: Run migrations (SQLite)
         run: |
