@@ -105,7 +105,7 @@ DATABASES = {
 
 database_url = os.getenv("DATABASE_URL")
 if database_url:
-    DATABASES["default"] = env.db_url(database_url)
+    DATABASES["default"] = env.db()
 
 
 # Password validation
