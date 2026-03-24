@@ -7,7 +7,7 @@ services:
       pip install -r requirements.txt
       python -m spacy download en_core_web_sm
       python manage.py collectstatic --noinput
-    startCommand: python manage.py migrate --noinput && gunicorn App.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    startCommand: python manage.py migrate --noinput && gunicorn App.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 180
     autoDeploy: true
     envVars:
       - key: DEBUG
