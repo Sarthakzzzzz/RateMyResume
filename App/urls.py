@@ -1,5 +1,7 @@
 # filepath: [urls.py](http://_vscodecontentref_/0)
 from django.contrib import admin
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import path, include
 from . import views
 from . import views_enhanced
@@ -23,6 +25,8 @@ urlpatterns = [
     
     # Legacy home
     path("old-home/", views.Home, name="old_home"),
-    
-    path("__reload__/", include("django_browser_reload.urls")),
 ]
+
+if settings.DEBUG:
+    urlpatterns += [path("__reload__/", include("django_browser_reload.urls"))]
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

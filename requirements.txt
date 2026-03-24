@@ -1,4 +1,7 @@
 Django
+gunicorn
+whitenoise
+psycopg[binary]
 PyMuPDF
 spacy
 numpy

@@ -11,30 +11,42 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
 from pathlib import Path
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_DIR = os.path.join(BASE_DIR, "App")
+env = environ.Env()
+environ.Env.read_env(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-3s18%l!t76@cx-l%%6&cauy^#*+m4h%ed#98jv12ax5^hxib+d"
+SECRET_KEY = env(
+    "SECRET_KEY"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool("DEBUG")
 
-ALLOWED_HOSTS = []
-INTERNAL_IPS = ['127.0.0.1']
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in env("ALLOWED_HOSTS").split(",")
+    if host.strip()
+]
+render_host = (os.getenv("RENDER_EXTERNAL_HOSTNAME") or "").strip()
+if render_host and render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_host)
+
+INTERNAL_IPS = ["127.0.0.1"] if DEBUG else []
 
 # Application definition
 
 INSTALLED_APPS = [
     "App",
-    'tailwind',
-    'theme',
-    'django_browser_reload',
+    "tailwind",
+    "theme",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -43,16 +55,23 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 ]
 
+if DEBUG:
+    INSTALLED_APPS.append("django_browser_reload")
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django_browser_reload.middleware.BrowserReloadMiddleware",
 ]
+
+if DEBUG:
+    MIDDLEWARE.append(
+        "django_browser_reload.middleware.BrowserReloadMiddleware")
 
 ROOT_URLCONF = "App.urls"
 
@@ -84,6 +103,10 @@ DATABASES = {
     }
 }
 
+database_url = os.getenv("DATABASE_URL")
+if database_url:
+    DATABASES["default"] = env.db_url(database_url)
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -112,14 +135,36 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 
 USE_I18N = True
-NPM_BIN_PATH = "C:/Program Files/nodejs/npm.cmd"
+NPM_BIN_PATH = env("NPM_BIN_PATH")
 USE_TZ = True
 TAILWIND_APP_NAME = "theme"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+_static_dir = BASE_DIR / "static"
+STATICFILES_DIRS = [_static_dir] if _static_dir.exists() else []
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = Path(env("MEDIA_ROOT"))
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    CSRF_TRUSTED_ORIGINS = [
+        origin.strip()
+        for origin in env("CSRF_TRUSTED_ORIGINS").split(",")
+        if origin.strip()
+    ]
+    if render_host:
+        render_origin = f"https://{render_host}"
+        if render_origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(render_origin)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

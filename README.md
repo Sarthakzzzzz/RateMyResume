@@ -14,7 +14,8 @@ AI-powered resume analyzer with visual charts and position-based scoring.
 ```bash
 git clone <repo-url>
 cd RateMyResume
-pip install -r requirements_enhanced.txt
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
 python manage.py migrate
 python manage.py runserver
 ```
@@ -42,3 +43,21 @@ Critical: Missing Python, SQL skills
 Important: Add quantified achievements
 Suggestion: Include technical projects
 ```
+
+## Deployment (Render)
+
+This repo now includes `render.yaml` and `Procfile` for one-click Render deployment.
+
+1. Push this repository to GitHub.
+2. In Render, create a new Blueprint and connect this repo.
+3. Render will provision:
+   - A Python web service (`ratemyresume-web`)
+   - A PostgreSQL database (`ratemyresume-db`)
+   - A persistent disk mounted at `/var/data` for uploaded resumes
+4. After first deploy, open your Render service URL.
+
+Important environment variables are managed in `render.yaml`:
+- `DEBUG=False`
+- generated `SECRET_KEY`
+- `DATABASE_URL` from Render Postgres
+- `MEDIA_ROOT=/var/data/media`
