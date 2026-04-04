@@ -1,13 +1,18 @@
-from django.test import SimpleTestCase
-from django.urls import reverse, resolve, NoReverseMatch
-import App.views_dashboard as views
 import os
 import django
 
 
 # Ensure this is the correct settings module for your project
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "RateMyResume.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "App.settings")
+os.environ["DEBUG"] = "True"
+os.environ["SECURE_SSL_REDIRECT"] = "False"
+os.environ.setdefault("MPLCONFIGDIR", "/tmp")
 django.setup()
+
+from django.test import SimpleTestCase
+from django.urls import reverse, resolve, NoReverseMatch
+
+import App.views_dashboard as views
 
 
 class TestViewResolution(SimpleTestCase):

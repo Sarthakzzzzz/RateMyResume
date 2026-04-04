@@ -11,7 +11,12 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
 from pathlib import Path
+from typing import cast
+import importlib.util
+
 import environ
+
+WHITE_NOISE_AVAILABLE = importlib.util.find_spec("whitenoise") is not None
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,7 +37,7 @@ DEBUG = env.bool("DEBUG")
 
 ALLOWED_HOSTS = [
     host.strip()
-    for host in env("ALLOWED_HOSTS").split(",")
+    for host in cast(str, env("ALLOWED_HOSTS")).split(",")
     if host.strip()
 ]
 render_host = (os.getenv("RENDER_EXTERNAL_HOSTNAME") or "").strip()
@@ -60,7 +65,6 @@ if DEBUG:
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -68,6 +72,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+if WHITE_NOISE_AVAILABLE:
+    MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
 
 if DEBUG:
     MIDDLEWARE.append(
@@ -135,7 +142,7 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 
 USE_I18N = True
-NPM_BIN_PATH = env("NPM_BIN_PATH")
+NPM_BIN_PATH = cast(str, env("NPM_BIN_PATH"))
 USE_TZ = True
 TAILWIND_APP_NAME = "theme"
 
@@ -144,21 +151,25 @@ TAILWIND_APP_NAME = "theme"
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_STORAGE = (
+    "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    if WHITE_NOISE_AVAILABLE
+    else "django.contrib.staticfiles.storage.StaticFilesStorage"
+)
 _static_dir = BASE_DIR / "static"
 STATICFILES_DIRS = [_static_dir] if _static_dir.exists() else []
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = Path(env("MEDIA_ROOT"))
+MEDIA_ROOT = Path(cast(str, env("MEDIA_ROOT")))
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT")
+    SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=False)
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     CSRF_TRUSTED_ORIGINS = [
         origin.strip()
-        for origin in env("CSRF_TRUSTED_ORIGINS").split(",")
+        for origin in cast(str, env("CSRF_TRUSTED_ORIGINS", default="")).split(",")
         if origin.strip()
     ]
     if render_host:

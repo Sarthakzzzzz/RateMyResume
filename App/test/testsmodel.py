@@ -1,13 +1,19 @@
-import App.utils.rating as rating
-from App.models.resume import Resume
+import django
+import os
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "App.settings")
+os.environ["DEBUG"] = "True"
+os.environ["SECURE_SSL_REDIRECT"] = "False"
+os.environ.setdefault("MPLCONFIGDIR", "/tmp")
+django.setup()
+
 import re
 import types
 from unittest.mock import patch
+
 from django.test import TestCase
-import django
-import os
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "RateMyResume.settings")
-django.setup()
+
+import App.utils.rating as rating
+from App.models.resume import Resume
 
 
 def _doc_with_ents(ents):

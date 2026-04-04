@@ -1,9 +1,14 @@
-from django.shortcuts import render
-from django.http import JsonResponse
-from .models.resume import Resume
-from .models.recieve import extract_text_from_pdf, extract_text_from_docx
-from .utils.dashgen import ResumeDashboard
+import logging
 import os
+
+from django.http import JsonResponse
+from django.shortcuts import render
+
+from .models.recieve import extract_text_from_docx, extract_text_from_pdf
+from .models.resume import Resume
+from .utils.dashgen import ResumeDashboard
+
+logger = logging.getLogger(__name__)
 
 def dashboard_home(request):
     """Main dashboard view"""
@@ -11,7 +16,10 @@ def dashboard_home(request):
 
 def comprehensive_analysis(request):
     """Comprehensive dashboard analysis"""
-    if request.method == "POST":
+    if request.method != "POST":
+        return render(request, 'dashboard_home.html')
+
+    try:
         resume_file = request.FILES.get("resume")
         position = request.POST.get("position", "software_engineer")
         
@@ -44,13 +52,16 @@ def comprehensive_analysis(request):
                 "position": position.replace('_', ' ').title()
             }
             
-            return render(request, "comprehensive_dashboard.html", context)
+            return render(request, "dashboard.html", context)
         else:
             return render(request, "dashboard_home.html", {
                 "error": "No file uploaded."
             })
-    
-    return render(request, 'dashboard_home.html')
+    except Exception:
+        logger.exception("Failed to generate comprehensive dashboard")
+        return render(request, "dashboard_home.html", {
+            "error": "We couldn't analyze that resume right now. Please try again with a valid PDF or DOCX file."
+        })
 
 def get_dashboard_api(request):
     """API endpoint for dashboard data"""
